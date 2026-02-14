@@ -1,0 +1,5 @@
+{
+  "name": "Copy of GenCity 3D Builder",
+  "description": "An interactive 3D city builder where you can configure building sizes manually or generate themed city layouts using Gemini AI.",
+  "requestFramePermissions": []
+}

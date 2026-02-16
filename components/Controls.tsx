@@ -1,6 +1,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { BuildingData, Connection, ManualRoad, BlueprintLayout, BlueprintCell, BuildingMetadata } from '../types';
+import sampleBuildingCsv from '../datasets/AIBubble/AI_Bubble_Building_Description.csv?raw';
+import sampleLinksCsv from '../datasets/AIBubble/AI_Bubble_Links.csv?raw';
 
 interface AvailableSlot {
   x: number;
@@ -78,6 +80,7 @@ export const Controls: React.FC<ControlsProps> = ({
   const [hasImportedBuildings, setHasImportedBuildings] = useState(false);
   const [breadcrumb, setBreadcrumb] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingSampleLinksRef = useRef<string | null>(null);
 
   const isDarkPanel = isBuildMode || isMoveMode || isRoadMode || isConnectionMode || !!selectedBuilding;
 
@@ -151,8 +154,33 @@ export const Controls: React.FC<ControlsProps> = ({
         setPendingImportType(null);
     };
     reader.readAsText(file);
-    e.target.value = ''; 
+    e.target.value = '';
   };
+
+  const loadSampleDataset = (buildingCsv: string, linksCsv: string) => {
+    setShowCsvPrompt(false);
+    try {
+      processBuildingsCsvToBlueprint(buildingCsv);
+      setHasImportedBuildings(true);
+      pendingSampleLinksRef.current = linksCsv;
+      setBreadcrumb("Architectural Sequence Analyzed");
+    } catch (err) {
+      console.error(err);
+      setBreadcrumb("Import Error");
+    }
+  };
+
+  useEffect(() => {
+    if (pendingSampleLinksRef.current && allBuildings.length > 0) {
+      try {
+        processLinkingCsv(pendingSampleLinksRef.current);
+        setBreadcrumb("Network Synchronization Successful");
+      } catch (err) {
+        console.error(err);
+      }
+      pendingSampleLinksRef.current = null;
+    }
+  }, [allBuildings]);
 
   const processBuildingsCsvToBlueprint = (csvData: string) => {
     const lines = csvData.split(/\r?\n/).filter(l => l.trim() !== '');
@@ -222,7 +250,6 @@ export const Controls: React.FC<ControlsProps> = ({
 
   return (
     <>
-      <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".csv" className="hidden" />
       {breadcrumb && (
         <div className="fixed top-8 left-1/2 -translate-x-1/2 z-[500] animate-in slide-in-from-top-4 fade-in duration-500">
           <div className="bg-emerald-600/90 backdrop-blur-xl border border-emerald-400/30 text-white px-8 py-3 rounded-2xl shadow-2xl flex items-center gap-4">
@@ -232,16 +259,43 @@ export const Controls: React.FC<ControlsProps> = ({
         </div>
       )}
 
+      <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".csv" className="hidden" />
+
       {showCsvPrompt && (
         <div className="fixed inset-0 z-[500] flex items-center justify-center bg-black/85 backdrop-blur-2xl animate-in fade-in duration-300 p-4">
-           <div className="bg-slate-900 border border-white/10 p-10 rounded-[2.5rem] shadow-[0_0_120px_rgba(0,0,0,0.8)] max-w-md w-full text-center space-y-8 transform animate-in zoom-in-95 duration-500">
+           <div className="bg-slate-900 border border-white/10 p-10 rounded-[2.5rem] shadow-[0_0_120px_rgba(0,0,0,0.8)] max-w-3xl w-full text-center space-y-8 transform animate-in zoom-in-95 duration-500">
               <div className="w-24 h-24 bg-blue-500/10 rounded-full flex items-center justify-center mx-auto border border-blue-500/20"><i className="fas fa-file-csv text-5xl text-blue-400"></i></div>
               <div><h2 className="text-2xl font-black text-white uppercase tracking-tight">Dataset Recognition</h2></div>
-              <div className="flex flex-col gap-4">
-                <button onClick={() => selectImportType('BUILDING')} className="group relative w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase tracking-widest text-sm transition-all shadow-xl overflow-hidden"><i className="fas fa-building text-lg mr-2"></i> Building Dataset</button>
-                <button disabled={!hasImportedBuildings} onClick={() => selectImportType('LINK')} className={`group relative w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm transition-all overflow-hidden ${hasImportedBuildings ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-xl' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'}`}><i className="fas fa-project-diagram text-lg mr-2"></i> Network Links</button>
-                <button onClick={() => setShowCsvPrompt(false)} className="w-full py-2 text-slate-500 hover:text-white text-[11px] font-black uppercase tracking-[0.3em] mt-2 transition-colors">Cancel</button>
+              <div className="flex gap-6">
+                {/* Left: Upload CSV */}
+                <div className="flex-1 flex flex-col gap-4">
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Upload Your Own</h3>
+                  <button onClick={() => selectImportType('BUILDING')} className="group relative w-full py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-black uppercase tracking-widest text-sm transition-all shadow-xl overflow-hidden"><i className="fas fa-building text-lg mr-2"></i> Building Dataset</button>
+                  <button disabled={!hasImportedBuildings} onClick={() => selectImportType('LINK')} className={`group relative w-full py-5 rounded-2xl font-black uppercase tracking-widest text-sm transition-all overflow-hidden ${hasImportedBuildings ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-xl' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'}`}><i className="fas fa-project-diagram text-lg mr-2"></i> Network Links</button>
+                </div>
+
+                {/* Divider */}
+                <div className="flex flex-col items-center gap-2 py-4">
+                  <div className="w-px flex-1 bg-white/10"></div>
+                  <span className="text-[10px] font-black text-slate-500 uppercase">or</span>
+                  <div className="w-px flex-1 bg-white/10"></div>
+                </div>
+
+                {/* Right: Sample Datasets */}
+                <div className="flex-1 flex flex-col gap-4">
+                  <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Sample Datasets</h3>
+                  <button onClick={() => loadSampleDataset(sampleBuildingCsv, sampleLinksCsv)} className="group relative w-full py-5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl font-black uppercase tracking-widest text-sm transition-all shadow-xl overflow-hidden text-left px-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center shrink-0"><i className="fas fa-brain text-lg"></i></div>
+                      <div>
+                        <div className="text-sm">AI Bubble</div>
+                        <div className="text-[9px] font-normal normal-case tracking-normal text-emerald-200/70 mt-0.5">13 companies &middot; 16 links</div>
+                      </div>
+                    </div>
+                  </button>
+                </div>
               </div>
+              <button onClick={() => setShowCsvPrompt(false)} className="w-full py-2 text-slate-500 hover:text-white text-[11px] font-black uppercase tracking-[0.3em] mt-2 transition-colors">Cancel</button>
            </div>
         </div>
       )}

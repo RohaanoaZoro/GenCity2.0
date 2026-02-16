@@ -1,6 +1,3 @@
-<<<<<<< Updated upstream
-
-=======
 # GenCity 3D Builder
 
 An interactive 3D city builder and visualization tool powered by React Three Fiber and Google Gemini AI. Create, edit, and explore stylized cityscapes in real-time with AI-assisted layout generation, network visualization, and blueprint planning.
@@ -23,8 +20,7 @@ An interactive 3D city builder and visualization tool powered by React Three Fib
 - Animated Tron-style data stream particles in the sky
 
 ### AI-Powered City Generation
-- Generate themed city layouts from a text prompt using **Google Gemini AI**
-- Produces 5–12 buildings with names, descriptions, colors, positions, and stats
+- Produces 5–12 buildings with names, descriptions, colors, positions, and stats using a CSV upload feature or through a blueprint designer feature.
 - Optional — the editor works fully without an API key
 
 ### Network Connections
@@ -216,4 +212,3 @@ Nexus Tower,Solar Grid,500M,Energy Link,Primary power distribution route
 ## License
 
 See [LICENSE](LICENSE) for details.
->>>>>>> Stashed changes

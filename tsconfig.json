@@ -11,7 +11,8 @@
     ],
     "skipLibCheck": true,
     "types": [
-      "node"
+      "node",
+      "./vite-env"
     ],
     "moduleResolution": "bundler",
     "isolatedModules": true,
